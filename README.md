@@ -1,0 +1,17 @@
+# CmdKit - terminal command collections
+
+## Introduction
+
+- **search**: search google and write down links to markdown(.md) file
+- **ppm**: wrapper over pip, but auto-update to requirements.txt
+- **venv**: create Python vitual environment according version selected
+- **license**: get LICENSE template, "[year][name]" replace by current year and git user.name
+- **ignore**: get .gitignore template for specified language
+
+## Install
+
+```sh
+git clone git@github.com:elisong/cmdkit.git
+cd cmdkit
+python3 -m pip install .
+```

@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Short for create python3 virtual environment.
+# Usage: venv
+import shutil
+import platform
+import subprocess
+from pathlib import Path
+from simple_term_menu import TerminalMenu
+
+
+def list_python():
+    cellar = Path('/usr/local/Cellar')
+    versions = sorted(x.name for x in cellar.glob('python@3*'))
+    paths = sorted(str(x) for x in cellar.glob('python@3*/3.*/bin/python3'))
+    return versions, paths
+
+
+def if_change_mirror():
+    print("🔨 Setup PyPi mirror")
+    mirror_options = ["default",
+                      "https://pypi.tuna.tsinghua.edu.cn/simple",
+                      "https://pypi.mirrors.ustc.edu.cn/simple/",
+                      ]
+    mirror_menu = TerminalMenu(mirror_options)
+    mirror_index = mirror_menu.show()
+    if mirror_index > 0:
+        index_url = mirror_options[mirror_index]
+        subprocess.run(
+            ['.venv/bin/python', '-m', 'pip', 'config', '--site', '--quiet',
+             'set', 'global.index-url', index_url
+             ],
+            check=False)
+    else:
+        pass
+
+
+def if_install_requirements():
+    if Path("requirements.txt").exists():
+        print("🔨 Find requirements.txt file. Install ?")
+        install_options = ['yes', 'no']
+        install_menu = TerminalMenu(install_options)
+        install_index = install_menu.show()
+        if install_index == 0:
+            subprocess.run(
+                ['.venv/bin/python', '-m', 'pip',
+                    'install', '-r', 'requirements.txt'],
+                check=False)
+    else:
+        pass
+
+
+def main():
+    print("🔨 Choose target python version")
+    versions, paths = list_python()
+    version_menu = TerminalMenu(versions)
+    version_index = version_menu.show()
+    targetVersion = versions[version_index]
+    targetPath = paths[version_index]
+    print("🔨 Create %s in `.venv` directory" % targetVersion)
+    try:
+        shutil.rmtree(".venv")
+    except FileNotFoundError:
+        pass
+    subprocess.run([targetPath, "-m", "venv", ".venv"], check=False)
+    print("🔨 Update pip to most recent version")
+    subprocess.run(['.venv/bin/python', '-m', 'pip', 'install', '-U', 'pip'],
+                   check=False)
+    if_change_mirror()
+    if_install_requirements()
+    print("🔨 Task complete\n☕️ Start with `source .venv/bin/activate`")
+
+
+if __name__ == "__main__":
+    shutil.which('brew') and main()

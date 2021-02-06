@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Usage:
+#   ppm <command> [options]
+
+# Commands:
+#   install                     Install packages.
+#   download                    Download packages.
+#   uninstall                   Uninstall packages.
+#   freeze                      Output installed packages in requirements format.
+#   list                        List installed packages.
+#   show                        Show information about installed packages.
+#   check                       Verify installed packages have compatible dependencies.
+#   config                      Manage local and global configuration.
+#   search                      Search PyPI for packages.
+#   cache                       Inspect and manage pip's wheel cache.
+#   wheel                       Build wheels from your requirements.
+#   hash                        Compute hashes of package archives.
+#   completion                  A helper command used for command completion.
+#   debug                       Show information useful for debugging.
+#   help                        Show help for commands.
+
+######################################################
+# More packages related to `pip` environment
+# - pipenv
+# - Hatch
+# - Poetry
+# - flit
+######################################################
+import sys
+from pathlib import Path
+import subprocess
+from pip._vendor.packaging.utils import canonicalize_name
+from pip._internal.cli.main_parser import parse_command
+
+args = sys.argv[1:]
+cmd_name, cmd_args = parse_command(args)
+WHICH_PYTHON = subprocess.run(["which", 'python'], capture_output=True,
+                              text=True).stdout.strip()
+
+
+def freeze_pkgs():
+    freeze = subprocess.run([WHICH_PYTHON, '-m', 'pip', 'freeze'],
+                            capture_output=True,
+                            text=True).stdout.strip()
+    pkg_list = freeze.split('\n')
+    return {canonicalize_name(pkg.split('==')[0]): pkg.split('==')[
+        1] for pkg in pkg_list}
+
+
+def update_requirements(pkgs):
+    requirements = Path("requirements.txt")
+    if not requirements.exists():
+        requirements.open('w').close()
+    with requirements.open('r+') as f:
+        requires = {}
+        for l in f.read().splitlines():
+            pkg, ver = l.split("==")
+            if cmd_name == 'uninstall' and pkg in pkgs.keys():
+                continue
+            else:
+                requires[pkg] = ver.strip() + '\n'
+        if cmd_name == 'install':
+            requires.update(pkgs)
+        f.seek(0)
+        f.writelines('=='.join(item) for item in requires.items())
+        f.truncate()
+
+
+def main():
+    if cmd_name in ("install", "uninstall"):
+        pkgs_maybe = {
+            canonicalize_name(i.split('==')[0])
+            for i in cmd_args if not i.startswith('-')
+        }
+        pkgs_bfr = freeze_pkgs()
+        subprocess.run([WHICH_PYTHON, '-m', 'pip'] + args, check=False)
+        pkgs_afr = freeze_pkgs()
+        if cmd_name == "install":
+            pkgs = (set(pkgs_afr.keys()) - set(pkgs_bfr.keys())) & pkgs_maybe
+            if pkgs:
+                add_pkgs = {k: v for k, v in pkgs_afr.items() if k in pkgs}
+                update_requirements(add_pkgs)
+        else:
+            pkgs = (set(pkgs_bfr.keys()) - set(pkgs_afr.keys())) & pkgs_maybe
+            if pkgs:
+                rm_pkgs = {k: v for k, v in pkgs_bfr.items() if k in pkgs}
+                update_requirements(rm_pkgs)
+    else:
+        subprocess.run([WHICH_PYTHON, '-m', 'pip'] + args, check=False)
+
+
+if __name__ == "__main__":
+    main()
