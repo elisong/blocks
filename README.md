@@ -1,4 +1,4 @@
-# CmdKit - terminal command collections
+# CmdKits - terminal command collections
 
 ## Introduction
 
@@ -11,7 +11,7 @@
 ## Install
 
 ```sh
-git clone git@github.com:elisong/cmdkit.git
+git clone git@github.com:elisong/cmdkits.git
 cd cmdkit
 python3 -m pip install .
 ```

@@ -5,12 +5,12 @@ from setuptools import setup
 
 scripts = ['bin/' + f for f in listdir('bin')]
 
-setup(name='cmdkit',
+setup(name='cmdkits',
       version='1.0',
-      description='CmdKit - terminal command collections',
+      description='CmdKits - terminal command collections',
       author='elisong',
       author_email='elisong.ah@gmail.com',
-      url="https://github.com/elisong/cmdkit",
+      url="https://github.com/elisong/cmdkits",
       scripts=scripts,
       install_requires=[
           'lxml',
