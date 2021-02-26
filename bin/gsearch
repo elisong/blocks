@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# usage: search [-h] [--site SITE] [--filetype FILETYPE] [--intitle INTITLE]
+# usage: gsearch [-h] [--site SITE] [--filetype FILETYPE] [--intitle INTITLE]
 #               [--inurl INURL] [--link LINK] [--proxy-host PROXY_HOST]
 #               [--proxy-port PROXY_PORT] [-n NUM] [-o OUTPUT_FILE]
 #               [-t OUTPUT_TITLE]
@@ -11,7 +11,7 @@ import subprocess
 import pkg_resources
 
 parser = argparse.ArgumentParser(
-    prog='search', description='Google Search Command')
+    prog='gsearch', description='Google Search Command')
 parser.add_argument('query', type=str, help='Query')
 parser.add_argument('--site', type=str,
                     help='Restricted to specified site')
