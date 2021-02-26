@@ -2,7 +2,7 @@
 
 ## Introduction
 
-- **search**: search google and write down links to markdown(.md) file
+- **gsearch**: search google and write down links to markdown(.md) file
 - **ppm**: wrapper over pip, but auto-update to requirements.txt
 - **venv**: create Python vitual environment according version selected
 - **license**: get LICENSE template, "[year][name]" replace by current year and git user.name

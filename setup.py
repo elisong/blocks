@@ -16,6 +16,7 @@ setup(name='cmdkit',
           'lxml',
           'google',
           'mdutils',
-          'simple_term_menu'
+          'simple_term_menu',
+          'beautifulsoup4'
       ]
       )
