@@ -27,36 +27,36 @@
 # - Poetry
 # - flit
 ######################################################
+import shutil
 import sys
 from pathlib import Path
-import subprocess
+import subprocess as sp
 from pip._vendor.packaging.utils import canonicalize_name
 from pip._internal.cli.main_parser import parse_command
 
 args = sys.argv[1:]
 cmd_name, cmd_args = parse_command(args)
-WHICH_PYTHON = subprocess.run(["which", 'python'], capture_output=True,
-                              text=True).stdout.strip()
 
 
-def freeze_pkgs():
-    freeze = subprocess.run([WHICH_PYTHON, '-m', 'pip', 'freeze'],
-                            capture_output=True,
-                            text=True).stdout.strip()
-    pkg_list = freeze.split('\n')
-    return {canonicalize_name(pkg.split('==')[0]): pkg.split('==')[
-        1] for pkg in pkg_list}
+def pip_freeze():
+    freeze = sp.run(['pip', 'freeze'],
+                    capture_output=True,
+                    text=True).stdout.strip()
+    if freeze:
+        return dict(i.split('==') for i in freeze.split('\n'))
+    else:
+        return {}
 
 
-def update_requirements(pkgs):
-    requirements = Path("requirements.txt")
-    if not requirements.exists():
-        requirements.open('w').close()
-    with requirements.open('r+') as f:
+def update_reqs(pkgs):
+    file = Path("requirements.txt")
+    if not file.exists():
+        file.open('w').close()
+    with file.open('r+') as f:
         requires = {}
         for l in f.read().splitlines():
             pkg, ver = l.split("==")
-            if cmd_name == 'uninstall' and pkg in pkgs.keys():
+            if cmd_name == 'uninstall' and pkg in pkgs:
                 continue
             else:
                 requires[pkg] = ver.strip() + '\n'
@@ -68,26 +68,30 @@ def update_requirements(pkgs):
 
 
 def main():
+
     if cmd_name in ("install", "uninstall"):
         pkgs_maybe = {
             canonicalize_name(i.split('==')[0])
             for i in cmd_args if not i.startswith('-')
         }
-        pkgs_bfr = freeze_pkgs()
-        subprocess.run([WHICH_PYTHON, '-m', 'pip'] + args, check=False)
-        pkgs_afr = freeze_pkgs()
+        pkgs_before = pip_freeze()
+        sp.run(['pip'] + args, check=False)
+        pkgs_after = pip_freeze()
+
+        pkgs_bfrset = set(canonicalize_name(i) for i in pkgs_before.keys())
+        pkgs_afrset = set(canonicalize_name(i) for i in pkgs_after.keys())
         if cmd_name == "install":
-            pkgs = (set(pkgs_afr.keys()) - set(pkgs_bfr.keys())) & pkgs_maybe
+            pkgs = (pkgs_afrset - pkgs_bfrset) & pkgs_maybe
             if pkgs:
-                add_pkgs = {k: v for k, v in pkgs_afr.items() if k in pkgs}
-                update_requirements(add_pkgs)
+                add_pkgs = {k: v for k, v in pkgs_after.items() if k in pkgs}
+                update_reqs(add_pkgs)
         else:
-            pkgs = (set(pkgs_bfr.keys()) - set(pkgs_afr.keys())) & pkgs_maybe
+            pkgs = (pkgs_bfrset - pkgs_afrset) & pkgs_maybe
             if pkgs:
-                rm_pkgs = {k: v for k, v in pkgs_bfr.items() if k in pkgs}
-                update_requirements(rm_pkgs)
+                rm_pkgs = {k: v for k, v in pkgs_before.items() if k in pkgs}
+                update_reqs(rm_pkgs)
     else:
-        subprocess.run([WHICH_PYTHON, '-m', 'pip'] + args, check=False)
+        sp.run(['pip'] + args, check=False)
 
 
 if __name__ == "__main__":
